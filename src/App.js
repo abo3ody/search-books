@@ -1,58 +1,55 @@
-import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
-import './App.css';
+import React, { useEffect } from "react";
+import axios from "./axios";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import Books from "./components/Books";
+import SearchForm from "./components/SearchForm";
+import SingleBook from "./components/SingleBook";
+import { useDispatch, useSelector } from "react-redux";
+import {
+   GET_BOOKS_BEGIN,
+   GET_BOOKS_ERROR,
+   GET_BOOKS_SUCCESS,
+   selectBook,
+} from "./features/bookSlice";
 
+const api_key = process.env.REACT_APP_API_KEY;
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
-    </div>
-  );
+   const { books, category, searchText, orderBy, step, isError } =
+      useSelector(selectBook);
+   const dispatch = useDispatch();
+
+   const url = `?q=${category}+intitle:${searchText}&orderBy=${orderBy}&printType:books&key=${api_key}&maxResults=30&startIndex=${
+      step + 1
+   }`;
+
+   const fetchData = async (url) => {
+      dispatch(GET_BOOKS_BEGIN());
+      try {
+         const request = await axios.get(url);
+         dispatch(GET_BOOKS_SUCCESS(request.data));
+      } catch (error) {
+         dispatch(GET_BOOKS_ERROR());
+         console.log(error);
+      }
+   };
+
+   useEffect(() => {
+      fetchData(url);
+   }, [category, searchText, orderBy, step]);
+   return (
+      <div className="App">
+         <Router>
+            <SearchForm />
+            <Switch>
+               <Route path="/" exact>
+                  {isError && <h1>no books found</h1>}
+                  {!isError && <Books />}
+               </Route>
+               <Route path="/books/:id" children={<SingleBook />}></Route>
+            </Switch>
+         </Router>
+      </div>
+   );
 }
 
 export default App;
