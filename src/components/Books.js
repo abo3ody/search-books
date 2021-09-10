@@ -1,13 +1,55 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components/macro";
-import { useDispatch } from "react-redux";
-import { useSelector } from "react-redux";
-import { MORE_BOOKS, selectBook } from "../features/bookSlice";
+import { useDispatch, useSelector } from "react-redux";
+
+import {
+   GET_BOOKS_BEGIN,
+   GET_BOOKS_ERROR,
+   GET_BOOKS_SUCCESS,
+   MORE_BOOKS,
+   selectBook,
+} from "../features/bookSlice";
 import BookCard from "./BookCard";
+import axios from "../axios";
+
+const api_key = process.env.REACT_APP_API_KEY;
 
 function Books() {
-   const { books = [], totalItems, isLoading } = useSelector(selectBook);
+   const {
+      books = [],
+      searchText,
+      category,
+      orderBy,
+      step,
+      totalItems,
+      isLoading,
+   } = useSelector(selectBook);
    const dispatch = useDispatch();
+   // const { books, category, searchText, orderBy, step, isError } =
+   //    useSelector(selectBook);
+
+   const url = `?q=${category}+intitle:${searchText}&orderBy=${orderBy}&printType:books&key=${api_key}&maxResults=30&startIndex=${
+      step + 1
+   }`;
+
+   const fetchData = async (url) => {
+      dispatch(GET_BOOKS_BEGIN());
+      try {
+         const request = await axios.get(url);
+         dispatch(GET_BOOKS_SUCCESS(request.data));
+      } catch (error) {
+         dispatch(GET_BOOKS_ERROR());
+         console.log(error);
+      }
+   };
+   const loadMore = () => {
+      dispatch(MORE_BOOKS);
+   };
+
+   useEffect(() => {
+      fetchData(url);
+   }, [url]);
+   console.log(step);
    return (
       <Wrapper>
          <h4>Found {totalItems} results</h4>
@@ -23,7 +65,7 @@ function Books() {
             <button
                type="button"
                className="load_more_btn"
-               onClick={dispatch(MORE_BOOKS)}
+               onClick={() => dispatch(MORE_BOOKS())}
             >
                load more
             </button>

@@ -64,7 +64,7 @@ export const bookSlice = createSlice({
       },
       MORE_BOOKS: (state) => {
          if (state.step >= state.totalItems) {
-            //  return { ...state, step: state.totalItems };
+            return { ...state, step: state.totalItems };
          } else return { ...state, step: state.step + 30 };
       },
    },
